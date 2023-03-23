@@ -1,0 +1,15 @@
+#spring:
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          google:
+#            clientId: 529334343020-fqkekpddjclfhrc0t0jprrm1oi5ndc07.apps.googleusercontent.com
+#            clientSecret: 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
+project:
+  security:
+    publicUrls:
+      - "/"
+      - "/login"
+    protectedUrls:
+      - { urlPattern: "/users", authorities: ["VIEW_LIST"] }

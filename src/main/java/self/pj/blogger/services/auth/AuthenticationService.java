@@ -1,0 +1,44 @@
+package self.pj.blogger.services.auth;
+
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import self.pj.blogger.config.DatabaseUserDetails;
+import self.pj.blogger.models.User;
+import self.pj.blogger.repositories.UserRepository;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@NoArgsConstructor
+public class AuthenticationService implements UserDetailsService {
+    private UserRepository userRepository;
+
+    @Autowired
+    public AuthenticationService(UserRepository repository)
+    {
+        this.userRepository = repository;
+    }
+
+    @Override
+    @Transactional
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Optional<User> user = userRepository.findByUsername(username);
+        System.out.println("checkpoint 5");
+        if (user.isEmpty())
+            throw new UsernameNotFoundException("USER NOT FOUND!");
+        System.out.println("checkpoint 6");
+//        return new org.springframework.security.core.userdetails.User(user.get().getUsername(),
+//                user.get().getPassword(),
+//                user.get().getRole().getAuthorities()
+//                        .stream().map(a -> new SimpleGrantedAuthority(a.getAuthName())).collect(Collectors.toList()));
+        return new DatabaseUserDetails(user.get());
+    }
+}
