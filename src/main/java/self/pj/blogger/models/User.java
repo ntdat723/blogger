@@ -46,6 +46,13 @@ public class User {
         this.role = role;
     }
 
+    public User(long id, String username, String password)
+    {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+    }
+
     public void addNewPost(Post p)
     {
         p.setUser(this);

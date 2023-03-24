@@ -4,8 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -18,20 +21,24 @@ import self.pj.blogger.services.auth.TokenProvider;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
     private final CustomSecurity customSecurity;
     private final CorsFilter corsFilter;
     private final TokenProvider tokenProvider;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
+    //private final UserDetailsService userDetailsService;
+
     @Autowired
     public WebSecurityConfig(CustomSecurity customSecurity, TokenProvider provider, CorsFilter corsFilter,
-                             JwtAuthenticationEntryPoint entryPoint)
+                             JwtAuthenticationEntryPoint entryPoint)//, UserDetailsService userDetailsService)
     {
         this.customSecurity = customSecurity;
         this.tokenProvider = provider;
         this.jwtAuthenticationEntryPoint = entryPoint;
         this.corsFilter = corsFilter;
+        //this.userDetailsService = userDetailsService;
     }
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder()
@@ -40,8 +47,15 @@ public class WebSecurityConfig {
     }
 
     @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                //.userDetailsService(userDetailsService)
                 .csrf()
                 .disable()
                 .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
@@ -83,20 +97,23 @@ public class WebSecurityConfig {
 //    public DaoAuthenticationProvider daoAuthenticationProvider()
 //    {
 //        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-//        authenticationProvider.setUserDetailsService(userDetailsService());
+//        //authenticationProvider.setUserDetailsService(userDetailsService());
 //        authenticationProvider.setPasswordEncoder(bCryptPasswordEncoder());
 //
 //        return authenticationProvider;
 //    }
-//
+
 //    @Bean
 //    public AuthenticationManager authenticationManager(AuthenticationManagerBuilder builder) throws Exception
 //    {
-//        return builder.authenticationProvider(daoAuthenticationProvider()).getOrBuild();
+//        return builder.userDetailsService(userDetailsService()).and().getOrBuild();
 //    }
+//
 //    @Bean
 //    public UserDetailsService userDetailsService()
 //    {
 //        return new AuthenticationService();
 //    }
+
+
 }

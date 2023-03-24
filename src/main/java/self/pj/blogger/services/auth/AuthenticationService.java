@@ -13,6 +13,7 @@ import self.pj.blogger.config.DatabaseUserDetails;
 import self.pj.blogger.models.User;
 import self.pj.blogger.repositories.UserRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,11 @@ public class AuthenticationService implements UserDetailsService {
 //                user.get().getPassword(),
 //                user.get().getRole().getAuthorities()
 //                        .stream().map(a -> new SimpleGrantedAuthority(a.getAuthName())).collect(Collectors.toList()));
-        return new DatabaseUserDetails(user.get());
+        User found = user.get();
+        List<SimpleGrantedAuthority> grantedAuthorities = user.get()
+                .getRole().getAuthorities()
+                .stream().map(authority -> new SimpleGrantedAuthority(authority.getAuthName()))
+                .toList();
+        return new DatabaseUserDetails(found.getId(), found.getUsername(), found.getPassword(), grantedAuthorities);
     }
 }

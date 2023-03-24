@@ -11,5 +11,6 @@ project:
     publicUrls:
       - "/"
       - "/login"
+      - "/search/**"
     protectedUrls:
       - { urlPattern: "/users", authorities: ["VIEW_LIST"] }

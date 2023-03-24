@@ -2,6 +2,10 @@ package self.pj.blogger.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import self.pj.blogger.models.Post;
@@ -13,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController()
-@RequestMapping("users/{uid}/posts")
+@RequestMapping("/users/{uid}/posts")
 public class PostController {
     public static final int MAX_CONTENT_LENGTH = 255;
     private final UserRepository userRepository;
@@ -41,9 +45,12 @@ public class PostController {
     }
 
     @GetMapping("/{pid}")
+    @PreAuthorize("principal.getId() == #uid")
     public ResponseEntity<Post> getPost(@PathVariable long uid, @PathVariable long pid)
     {
-        Optional<Post> post = postRepository.findByIdAndUserId(uid, pid);
+        Authentication au = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println(au.getPrincipal());
+        Optional<Post> post = postRepository.findByIdAndUserId(pid, uid);
         if (!userRepository.existsById(uid) || post.isEmpty())
             return ResponseEntity.notFound().build();
         return ResponseEntity.ok(post.get());
@@ -55,6 +62,7 @@ public class PostController {
         if (isInvalid(body))
             return ResponseEntity.badRequest().build();
 
+        System.out.println(uid);
         Optional<User> user = userRepository.findById(uid);
         if (user.isEmpty())
             return ResponseEntity.notFound().build();

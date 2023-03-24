@@ -9,8 +9,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import self.pj.blogger.config.DatabaseUserDetails;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
@@ -36,6 +38,7 @@ public class TokenProvider
         LocalDateTime exp = LocalDateTime.now().plusHours(EXPIRATION_TIME);
 
         return Jwts.builder()
+                .setId(String.valueOf(((DatabaseUserDetails) authentication.getPrincipal()).getId()))
                 .setSubject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
                 .setExpiration(Date.from(exp.toInstant(ZoneOffset.UTC)))
@@ -61,7 +64,8 @@ public class TokenProvider
                             .map(SimpleGrantedAuthority::new)
                             .toList();
 
-            User principal = new User(claims.getSubject(), "", authorities);
+            //User principal = new User(claims.getSubject(), "", authorities);
+            UserDetails principal = new DatabaseUserDetails(Long.parseLong(claims.getId()), claims.getSubject(), "", authorities);
             return new UsernamePasswordAuthenticationToken(principal, token, authorities);
         } catch (Exception ex)
         {
