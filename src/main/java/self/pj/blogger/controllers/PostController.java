@@ -1,5 +1,6 @@
 package self.pj.blogger.controllers;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,74 +13,44 @@ import self.pj.blogger.models.Post;
 import self.pj.blogger.models.User;
 import self.pj.blogger.repositories.PostRepository;
 import self.pj.blogger.repositories.UserRepository;
+import self.pj.blogger.services.PostService;
+import self.pj.blogger.services.UserService;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController()
+@RequiredArgsConstructor
 @RequestMapping("/users/{uid}/posts")
 public class PostController {
-    public static final int MAX_CONTENT_LENGTH = 255;
-    private final UserRepository userRepository;
-    private final PostRepository postRepository;
-
-    @Autowired
-    public PostController(UserRepository userRepository, PostRepository postRepository)
-    {
-        this.userRepository = userRepository;
-        this.postRepository = postRepository;
-    }
-
-    private boolean isInvalid(String content)
-    {
-        return content == null || content.trim().isEmpty() || content.length() > MAX_CONTENT_LENGTH;
-    }
+    private final PostService postService;
 
     @GetMapping("")
     public ResponseEntity<List<Post>> getAllPostBy(@PathVariable long uid)
     {
-        Optional<User> user = userRepository.findById(uid);
-        if (user.isEmpty())
-            return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(postRepository.findAllByUser(user.get()));
+        return ResponseEntity.ok(postService.getAllPostsByUid(uid));
     }
 
     @GetMapping("/{pid}")
     @PreAuthorize("principal.getId() == #uid")
     public ResponseEntity<Post> getPost(@PathVariable long uid, @PathVariable long pid)
     {
-        Authentication au = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println(au.getPrincipal());
-        Optional<Post> post = postRepository.findByIdAndUserId(pid, uid);
-        if (!userRepository.existsById(uid) || post.isEmpty())
-            return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(post.get());
+//        Authentication au = SecurityContextHolder.getContext().getAuthentication();
+//        System.out.println(au.getPrincipal());
+        return ResponseEntity.ok(postService.getPostBy(uid, pid));
     }
 
     @PostMapping("")
     public ResponseEntity<Post> createNewPost(@PathVariable long uid, @RequestBody String body)
     {
-        if (isInvalid(body))
-            return ResponseEntity.badRequest().build();
-
-        System.out.println(uid);
-        Optional<User> user = userRepository.findById(uid);
-        if (user.isEmpty())
-            return ResponseEntity.notFound().build();
-        Post post = new Post(body);
-        post.setUser(user.get());
-        postRepository.save(post);
-        return ResponseEntity.ok(post);
+        return ResponseEntity.ok(postService.createNewPost(uid, body));
     }
 
     @DeleteMapping("/{pid}")
     @Transactional
     public ResponseEntity<Post> deletePost(@PathVariable long uid, @PathVariable long pid)
     {
-        if (!userRepository.existsById(uid)
-                || !postRepository.existsByIdAndUserId(pid, uid))
-            return ResponseEntity.notFound().build();
-        postRepository.deleteById(pid);
+        postService.deletePost(uid, pid);
         return ResponseEntity.noContent().build();
     }
 
@@ -89,15 +60,6 @@ public class PostController {
                                          @PathVariable long pid,
                                          @RequestBody String content)
     {
-        if (isInvalid(content))
-            return ResponseEntity.badRequest().build();
-        Optional<Post> post = postRepository.findByIdAndUserId(pid, uid);
-        if (!userRepository.existsById(uid)
-                || post.isEmpty())
-            return ResponseEntity.notFound().build();
-        Post found = post.get();
-        found.setContent(content);
-        postRepository.save(found);
-        return ResponseEntity.ok(found);
+        return ResponseEntity.ok(postService.editPost(uid, pid, content));
     }
 }
